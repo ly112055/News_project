@@ -1,0 +1,303 @@
+<div>
+	<div id="info">
+		<select name="" class="categoryName-select">
+			<!-- <option id=""></option> -->
+		</select>
+		<button type="button" class="btn btn-success" id="add">新增</button>
+		<button type="button" class="btn btn-danger" id="allDel">批量删除</button>
+		<div class="table-div">
+				<table class="table table-bordered text-center">
+					<thead>
+					 	<tr>
+					 		<th class="text-center">编号</th>
+						 	<th class="text-center">文章标题</th>
+						 	<th class="text-center">所属栏目</th>
+						 	<th class="text-center">排列方式</th>
+						 	<th class="text-center">作者</th>
+						 	<th class="text-center">发布时间</th>
+						 	<th class="text-center">阅读次数</th>
+						 	<th class="text-center">操作</th>
+					 	</tr>
+					</thead>
+					<tbody>
+						<!-- <tr>
+							<td><input type="checkbox"/></td>
+						 	<td></td>
+						 	<td></td>
+						 	<td></td>
+						 	<td></td>
+						 	<td></td>
+						 	<td></td>
+						 	<td>
+						 		<i title="编辑" class="fa fa-pencil-square-o" aria-hidden="true"></i>
+								<i title="删除" class="fa fa-trash-o" aria-hidden="true"></i>
+						 	</td>
+						</tr> -->
+					</tbody>
+				</table>
+			</div>
+	</div>
+	<script type="text/javascript">
+		var xid = -1;
+		// findArticle();
+		function findArticle(obj){
+			// console.log(456);
+			getAjax('/manager/article/findArticle','GET',obj,function(res){
+				console.log(res.data.list);
+				var str = '';
+				res.data.list.forEach(function(item){
+					str += `
+						<tr>
+							<td><input type="checkbox" value="`+item.id+`"/></td>
+						 	<td>`+item.title+`</td>
+						 	<td data-pid="`+item.category.id+`">`+item.category.name+`</td>
+						 	<td>`+item.liststyle+`</td>
+						 	<td>`+null+`</td>
+						 	<td>`+item.publishtime+`</td>
+						 	<td>`+item.readtimes+`</td>
+						 	<td>
+						 		<i title="编辑" class="fa fa-pencil-square-o" aria-hidden="true"></i>
+								<i title="删除" class="fa fa-trash-o" aria-hidden="true"></i>
+						 	</td>
+						</tr>	
+					`;
+				});
+				$('tbody').html(str);
+			},function(){});
+		}
+		// 初始化页面
+		getAjax('/manager/category/findAllCategory','GET',null,function(res){
+			// console.log(res.data);
+			var obj = res.data[0];
+			var categoryId = obj.id;
+			// console.log(categoryId);
+			var obj = {
+				page:0,
+				pageSize:10,
+				categoryId:(+categoryId)
+			}
+			findArticle(obj);
+		},function(){});
+		//获取时间
+		function dateNow(date){
+			var year = date.getFullYear();
+			var month = date.getMonth()+1;
+			month = month<10?'0'+month:month;
+			var day = date.getDate();
+			day = day<10?'0'+day:day;
+			var hours = date.getHours();
+			hours = hours<10?'0'+hours:hours;
+			var minutes = date.getMinutes();
+			minutes = minutes<10?'0'+minutes:minutes;
+			var seconds = date.getSeconds();
+			seconds = seconds<10?'0'+seconds:seconds;
+			var str = year+'-'+month+'-'+day+' '+hours+':'+minutes+':'+seconds;
+			return str;
+		}
+		//批量删除函数
+		function batchDeleteCategory(obj,obj1){
+			getAjax('/manager/article/batchDeleteArticle','POST',obj,function(res){
+				console.log(res,'批量删除的');
+				findArticle(obj1);
+			},function(error){
+				console.log(error);
+			});
+		}
+		//单个删除函数
+		function deleteArticleById(obj,obj1){
+			getAjax('/manager/article/deleteArticleById','GET',obj,function(res){
+				alert('删除成功');
+				findArticle(obj1);
+			},function(error){})
+		}
+		//保存或修改
+		function saveOrUpdateArticle(obj,obj1){
+			getAjax('/manager/article/saveOrUpdateArticle','POST',obj,function(res){
+				findArticle(obj1);
+			},function(error){});
+		}
+		// 头部查询框
+		getAjax('/manager/category/findAllCategory','GET',null,function(res){
+			// console.log(res.data);
+			// var result = [];
+			// res.data.forEach(function(item){
+			// 	result.push(item.name);
+			// });
+			// console.log(result);
+			var str = '';
+			res.data.forEach(function(item){
+				str +=`
+					 <option id="`+item.id+`">`+item.name+`</option>
+				`;
+			});
+			$('.categoryName-select').html(str);
+		},function(){});
+		//选择头部查询框显示信息
+		$('.categoryName-select').click(function(evevt){
+			// console.log(123);
+			// console.log(event.target);
+			var categoryId = event.target.id;
+			// console.log(categoryId);
+			if (categoryId) {
+				var obj = {
+					page:0,
+					pageSize:10,
+					categoryId:(+categoryId)
+				}
+				findArticle(obj);
+			}
+		});
+		// 给新增文章的模态框获取所有的栏目你名字
+		getAjax('/manager/category/findAllCategory','GET',null,function(res){
+				var str = '';
+				res.data.forEach(function(item){
+					str +=`
+						<option data-id="`+item.id+`" value="`+item.name+`">`+item.name+`</option>
+					`;
+				});
+				$('#categoryName').html(str);
+			},function(error){});
+		$('#add').click(function(){
+			$('#myModal2 .modal-title').text('添加文章');
+			$('.modal [type=text]').val(null);
+			$('.modal textarea').val(null);
+			// console.log($('#categoryName').text());
+			// $('#categoryName').text(categoryName);
+			// $('.categoryName').text($('.btn-group button').text());
+			// console.log($('.btn-group button').text());
+			// console.log($('#categoryName').val());
+			var categoryId = $('.categoryName-select option:selected')[0].id;
+			// console.log(categoryId);
+			// console.log($('#categoryName').find("option[data-id="+categoryId+"]"));
+			// console.log("option[data-id="+categoryId+"]");
+			// console.log($('#categoryName').find("option[data-id="+categoryId+"]"));
+			$('#categoryName').find("option[data-id="+categoryId+"]").prop("selected",true);
+			$('#myModal2').modal('show');
+		})
+		$('#to-save2').click(function(){
+			// console.log(123);
+			var date = new Date();
+			var publishtime = dateNow(date);
+			var title = $('#title').val();
+			// var categoryName = $('#categoryName').val();
+			// console.log($('#categoryName option:selected')[0]);
+			//模态框的父栏目id
+			var categoryId = $($('#categoryName option:selected')[0]).attr('data-id');
+			// console.log(categoryId);
+			var liststyle = $('[type=radio]:checked').val();
+			// console.log($('[type=radio]:checked').val());
+			var content = $('#content').val();
+			var obj1 = {
+				page:0,
+				pageSize:100,
+				categoryId:categoryId
+			}
+			// console.log(title,categoryId,liststyle,content);
+			if (xid<0) {
+				var obj = {
+					title:title,
+					liststyle:liststyle,
+					categoryId:categoryId,
+					publishtime:publishtime,
+					content:content
+				}
+			// console.log(obj);
+			saveOrUpdateArticle(obj,obj1);
+			}else{
+				var obj = {
+					id : xid,
+					title:title,
+					liststyle:liststyle,
+					categoryId:categoryId,
+					publishtime:publishtime,
+					content:content
+				}
+				saveOrUpdateArticle(obj,obj1);
+			}
+			$('#myModal2').modal('hide');
+		})
+		//批量删除绑定按钮
+		$('#allDel').click(function(){
+			// console.log($('tbody input'));
+			// console.log($('.categoryName-select option:selected')[0].id);
+			//查询框的父栏目id
+			var categoryId = $('.categoryName-select option:selected')[0].id;
+			// console.log(categoryId);
+			var obj = {
+				page:0,
+				pageSize:100,
+				categoryId:(+categoryId)
+			}
+			var inputs = Array.prototype.slice.call($('tbody input'),0);
+			var ids = inputs.filter(function(item){
+				return item.checked;
+			}).map(function(item){
+				return item.value;
+			});
+			if (ids.length>0) {
+				// console.log(ids);
+				// console.log(ids.join());
+				batchDeleteCategory({ids:ids.join()},obj);
+
+			}else{
+				alert('请选择要删除的项!')
+			}
+
+		});
+		//绑定修改和单个删除按钮 事件代理
+		$('tbody').click(function(event){
+			// console.log(event.target);
+			//单个删除
+			if(event.target['title'] == '删除'){
+				// alert(123);
+				var $parentDom = $(event.target).parent().parent();
+				var id = $parentDom.find('input').val();
+				// console.log(id);
+				// var categoryId = $('.categoryName-select option:selected')[0].id;
+				var categoryId = $($('#categoryName option:selected')[0]).attr('data-id');
+				var obj = {
+					page:0,
+					pageSize:100,
+					categoryId:categoryId
+				}
+				deleteArticleById({id:id},obj);
+			}
+			if(event.target['title'] == '编辑'){
+				// alert(123);
+				$('#myModal2 .modal-title').text('修改文章信息');
+				var $parentDom = $(event.target).parent().parent();
+				var categoryId = $($parentDom.children()[2]).attr('data-pid');
+				// console.log(categoryId);
+				var id = $parentDom.find('input').val();
+				xid = id;
+				// console.log(id);
+				var obj = {
+					page:0,
+					pageSize:100,
+					categoryId:categoryId
+				}
+				getAjax('/manager/article/findArticle','GET',obj,function(res){
+					// console.log(res.data.list);
+					var result = res.data.list.filter(function(item){
+						return item.id == id;
+					});
+					// console.log(result[0]);
+					$('#title').val(result[0].title);
+					$('#categoryName').val(result[0].category.name);
+					if(result[0].liststyle == 'style-one'){
+						// alert(123);
+						$('input[name=liststyle]:first').prop('checked',true);
+					}
+					if(result[0].liststyle == 'style-two'){
+						// alert(123);
+						$('input[name=liststyle]:last').prop('checked',true);
+					}
+					$('#content').val(result[0].content);
+					$('#myModal2').modal('show');
+				},function(error){});
+
+
+			}
+		});
+	</script>
+</div>

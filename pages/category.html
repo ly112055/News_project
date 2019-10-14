@@ -1,0 +1,218 @@
+<div>
+	<div id="category">
+		<button type="button" class="btn btn-success" id="add">新增</button>
+		<button type="button" class="btn btn-danger" id="allDel">批量删除</button>
+		<!-- 表格 -->
+		<div class="table-div">
+			<table class="table table-bordered text-center">
+				<thead>
+				 	<tr>
+				 		<th class="text-center">编号</th>
+					 	<th class="text-center">名称</th>
+					 	<th class="text-center">父栏目</th>
+					 	<th class="text-center">描述</th>
+					 	<th class="text-center">操作</th>
+				 	</tr>
+				</thead>
+				<tbody>
+					<!-- <tr>
+						<td><input type="checkbox"/></td>
+					 	<td></td>
+					 	<td></td>
+					 	<td></td>
+					 	<td>
+					 		<i title="编辑" class="fa fa-pencil-square-o" aria-hidden="true"></i>
+							<i title="删除" class="fa fa-trash-o" aria-hidde n="true"></i>
+					 	</td>
+					</tr> -->
+				</tbody>
+			</table>
+
+		</div>
+	</div>
+	<script type="text/javascript">
+		var xid = -1;
+		// console.log(getAjax);
+		// console.log($);
+		// console.log($('.category-manage tbody'));
+		getAllCategory();
+		function getAllCategory(){
+			getAjax('/manager/category/findAllCategory','GET',null,function(res){
+				// console.log(res);
+				console.log(res.data);
+				var str = '';
+				res.data.forEach(function(item){
+					if(item.parent){
+						str += `<tr>
+						<td><input type="checkbox" value="`+item.id+`"/></td>
+					 	<td>`+item.name+`</td>
+					 	<td>`+item.parent.name+`</td>
+					 	<td>`+item.comment+`</td>
+					 	<td>
+					 		<i title="编辑" class="fa fa-pencil-square-o" aria-hidden="true"></i>
+							<i title="删除" class="fa fa-trash-o" aria-hidden="true"></i>
+					 	</td>
+					</tr>`;
+					}else{
+						str += `<tr>
+						<td><input type="checkbox" value="`+item.id+`"/></td>
+					 	<td>`+item.name+`</td>
+					 	<td>`+null+`</td>
+					 	<td>`+item.comment+`</td>
+					 	<td>
+					 		<i title="编辑" class="fa fa-pencil-square-o" aria-hidden="true"></i>
+							<i title="删除" class="fa fa-trash-o" aria-hidden="true"></i>
+					 	</td>
+					</tr>`;
+					}
+					$('tbody').html(str);
+				});
+			},function(error){
+				console.log(error);
+			});
+		}
+		//保存或修改函数
+		function saveOrUpdateCategory(obj){
+				getAjax('/manager/category/saveOrUpdateCategory','POST',obj,function(res){
+					//console.log('保存或修改');
+					getAllCategory();
+				},function(error){
+					console.log(error);
+				});
+		}
+		//批量删除函数
+		function batchDeleteCategory(obj){
+			getAjax('/manager/category/batchDeleteCategory','POST',obj,function(res){
+				console.log(res,'批量删除的');
+				getAllCategory();
+			},function(error){
+				console.log(error);
+			});
+		}
+		//单个删除函数
+		function deleteCategoryById(obj){
+			getAjax('/manager/category/deleteCategoryById','GET',obj,function(res){
+				//重新获取数据，更新DOM
+				getAllCategory();
+			},function(error){
+				console.log(error);
+			});
+		}
+		//新增按钮
+		$('#add').click(function(){
+			$('#myModal .modal-title').text('新增栏目');
+			//清空表单数据,显示模态框
+			$('.modal [type=text]').val(null);
+			$('#myModal').modal('show');
+		});
+		$('#to-save').click(function(){
+			var name = $('#name').val();
+			var pid = $('#pid').val();
+			var no = $('#no').val();
+			var comment = $('#comment').val();
+			// console.log(name,pid,comment);
+			// console.log(xid);
+			if (xid > 0) {
+				var obj = {
+						id:xid,
+						name:name,
+						no:no,
+						comment:comment,
+						parentId:pid
+					}
+				saveOrUpdateCategory(obj);
+				$('#myModal').modal('hide');
+			}else{
+				getAjax('/manager/category/findAllCategory','GET',null,function(res){
+				// console.log(123456);
+				var result = res.data.filter(function(item){
+					return item.id == pid;
+					// return item.name ==pname;
+				});
+				// console.log(result[0]);
+				if(result.length>0){
+					// console.log(123);
+					var obj = {
+						name:name,
+						no:no,
+						comment:comment,
+						parentId:pid
+					}
+					// console.log(obj);
+					saveOrUpdateCategory(obj);	
+				}else{
+					var obj = {
+						name:name,
+						no:no,
+						comment:comment,
+						parentId:null
+					}
+					saveOrUpdateCategory(obj);
+				}
+				$('#myModal').modal('hide');
+				},function(error){});
+			}
+		});
+		$('#allDel').click(function(){
+			// console.log($('tbody input'));
+			var inputs = Array.prototype.slice.call($('tbody input'),0);
+			var ids = inputs.filter(function(item){
+				return item.checked;
+			}).map(function(item){
+				return item.value;
+			});
+			if (ids.length>0) {
+				// console.log(ids);
+				// console.log(ids.join());
+				batchDeleteCategory({ids:ids.join()});
+			}else{
+				alert('请选择要删除的项!')
+			}
+		});
+		$('tbody').click(function(event){
+			// console.log(event.target);
+			//单个删除
+			if(event.target['title']=='删除'){
+				// alert(123);
+				// console.log(event.target);
+				var $tr = $(event.target).parent().parent();
+				var id = $tr.find('input').val();
+				console.log(id);
+				deleteCategoryById({id:id});
+				// alert('删除成功');
+				// console.log(123);
+			}
+			//修改
+			if(event.target['title']=='编辑'){
+				// alert(123);
+				$('#myModal .modal-title').text('修改栏目');
+				var $tr = $(event.target).parent().parent();
+				var id = $tr.find('input').val();
+				// console.log(id);
+				getAjax('/manager/category/findAllCategory','GET',null,function(res){
+					// console.log(res.data);
+					var result = res.data.filter(function(item){
+						return item.id == id;
+					});
+					// console.log(result[0]);
+					var obj = result[0];
+					xid = obj.id;
+					if (obj.parent) {
+						$('#name').val(obj.name);
+						$('#no').val(obj.no);
+						$('#pid').val(obj.parent.id);
+						$('#comment').val(obj.comment);
+						$('#myModal').modal('show');
+					}else{
+						$('#name').val(obj.name);
+						$('#no').val(obj.no);
+						$('#pid').val(null);
+						$('#comment').val(obj.comment);
+						$('#myModal').modal('show');
+					}
+					
+				},function(error){});
+			}
+		});
+	</script>
+</div>

@@ -1,0 +1,233 @@
+<div>
+	<div id="user">
+		<button type="button" class="btn btn-success" id="add">新增</button>
+		<br>
+			<div class="item-user">
+				<!-- <div class="user-all">
+					<img src="../images/1.jpeg"><br>
+					<div class="row">
+						<div class="col-md-5">
+							用户名
+						</div>
+						<div class="col-md-6">
+							
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-4">
+							真实姓名
+						</div>
+						<div class="col-md-7">
+							
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-4">
+							注册时间
+						</div>
+						<div class="col-md-7">
+							
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-4">
+							email
+						</div>
+						<div class="col-md-7">
+							
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-4">
+							状态
+						</div>
+						<div class="col-md-7">
+							
+						</div>
+					</div>
+				</div> -->
+			</div>
+			
+	</div>
+	<script type="text/javascript">
+		findAllUser();
+		//查找所有用户函数
+		var number = 0;
+		var arr = [];
+		function findAllUser(){
+			getAjax('/manager/user/findAllUser','GET',null,function(res){
+				// console.log(res.data);
+				var str = '';
+				arr = res.data;
+				res.data.forEach(function(item){
+					number +=1;
+					str +=`
+						<div class="user-all">
+							<img src="`+item.userface+`"><br>
+							<div class="row">
+								<div class="col-md-5">
+									用户名
+								</div>
+								<div class="col-md-6">
+									`+item.username+`
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-4">
+									真实姓名
+								</div>
+								<div class="col-md-7">
+									`+item.nickname+`
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-4">
+									注册时间
+								</div>
+								<div class="col-md-7">
+									`+item.regTime+`
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-4">
+									email
+								</div>
+								<div class="col-md-7">
+									`+item.email+`
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-4">
+									状态
+								</div>
+								<div class="col-md-7">
+									<input type="checkbox" class="checkbox" num="`+number+`" data-id="`+item.id+`"/>
+								</div>
+							</div>
+						</div>
+					`;
+					// console.log(item.id);
+					$('.item-user').html(str);
+				});
+
+				handle();
+				console.log(res.data);
+				$('.bootstrap-switch-container span').click(function(){
+		        	// console.log($($(event.target).siblings('input')[0]).attr('data-id'));
+		        	var id = +$($(event.target).siblings('input')[0]).attr('data-id');
+		        	getAjax('/manager/user/findAllUser','GET',null,function(res){
+		        		// console.log(res.data);
+		        		var result = res.data.filter(function(item){
+		        			return item.id == id;
+		        		});
+		        		// console.log(result[0].enabled);
+		        		var enabled = result[0].enabled;
+		        		var obj1 = {
+		        			id:id,
+		        			enabled:enabled
+		        		}
+		        		changeStatus(obj1);
+		        		// var obj2 = result[0];
+		        		// console.log(obj2);
+		        		// obj2.enabled = !enabled;
+		        		// console.log(obj2);
+		        		// saveOrUpdateUser(obj2);
+		        	},function(){});
+		        	// console.log(id);
+		        	// console.log(event.target);
+		        	// var obj = {
+		        	// 	id : id,
+		        	// 	state : 
+		        	// };
+		        });
+
+			},function(error){});
+		}
+		//保存函数
+		function saveOrUpdateUser(obj){
+			getAjax('/manager/user/saveOrUpdateUser','POST',obj,function(res){
+				findAllUser(obj);
+			},function(error){});
+		}
+		//改变状态
+		function changeStatus(obj){
+			getAjax('/manager/user/changeStatus','POST',obj,function(res){
+				console.log('修改状态成功...');
+			},function(){});
+		}
+
+		//获取时间
+		function dateNow(date){
+			var year = date.getFullYear();
+			var month = date.getMonth()+1;
+			month = month<10?'0'+month:month;
+			var day = date.getDate();
+			day = day<10?'0'+day:day;
+			var hours = date.getHours();
+			hours = hours<10?'0'+hours:hours;
+			var minutes = date.getMinutes();
+			minutes = minutes<10?'0'+minutes:minutes;
+			var seconds = date.getSeconds();
+			seconds = seconds<10?'0'+seconds:seconds;
+			var str = year+'-'+month+'-'+day+' '+hours+':'+minutes+':'+seconds;
+			return str;
+		}
+		$('#add').click(function(){
+			$('#myModal3').modal('show');
+		});
+		$('#to-save3').click(function(){
+			// console.log(123);
+			var date = new Date();
+			var regTime = dateNow(date);
+			var username = $('#username').val();
+			var password = $('#password').val();
+			var conpassword = $('#conpassword').val();
+			var nickname = $('#nickname').val();
+			var email = $('#email').val();
+			var userface = 'https://ss1.bdstatic.com/70cFvXSh_Q1YnxGkpoWK1HF6hhy/it/u=1911530906,3024354627&fm=26&gp=0.jpg';
+			if (password == conpassword) {
+				var obj = {
+					username:username,
+					password:password,
+					nickname:nickname,
+					email:email,
+					regTime:regTime,
+					userface:userface
+				}
+				saveOrUpdateUser(obj);
+				$('#myModal3').modal('hide');
+			}else{
+				alert('密码不一致！');
+			}
+
+		});
+		function handle(){  
+            /* 初始化控件 */  
+            // console.log(number,obj);
+            // console.log($('.checkbox[num='+number+']'));
+            // console.log(number);
+            // let n = number;
+            arr.forEach(function(item,index){
+	            $('.checkbox[num='+(index+1)+']').bootstrapSwitch({  
+	                onText : "ON",      // 设置ON文本  
+	                offText : "OFF",    // 设置OFF文本  
+	                onColor : "success",// 设置ON文本颜色     (info/success/warning/danger/primary)  
+	                offColor : "info",  // 设置OFF文本颜色        (info/success/warning/danger/primary)  
+	                size : "normal",    // 设置控件大小,从小到大  (mini/small/normal/large)  
+	                state : item.enabled,
+	                // state:true,
+	                // 当开关状态改变时触发  
+	                // onSwitchChange : function(event, state) {  
+	                //     if (state == true) {  
+	                //         alert("ON");  
+	                //     } else {  
+	                //         alert("OFF");  
+	                //     }  
+	                // }  
+	            });
+        	});
+            // console.log(obj.enabled);
+        }
+         
+	</script>
+</div>
